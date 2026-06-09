@@ -338,6 +338,19 @@ if(EXISTS ${TVM_SOURCE}/cmake/config.cmake)
 else()
   message(FATAL_ERROR "Nor tvm provided or submodule checkout-ed.")
 endif()
+# TVM's default config.cmake uses plain set() for FFI options, which shadows
+# command-line cache values passed via scikit-build. Restore explicit user
+# choices so builds from paths with spaces can disable libbacktrace.
+foreach(_tilelang_tvm_ffi_option IN ITEMS
+    TVM_FFI_USE_LIBBACKTRACE
+    TVM_FFI_BACKTRACE_ON_SEGFAULT)
+  if(DEFINED CACHE{${_tilelang_tvm_ffi_option}})
+    get_property(_tilelang_tvm_ffi_value CACHE ${_tilelang_tvm_ffi_option} PROPERTY VALUE)
+    set(${_tilelang_tvm_ffi_option} "${_tilelang_tvm_ffi_value}")
+  endif()
+endforeach()
+unset(_tilelang_tvm_ffi_option)
+unset(_tilelang_tvm_ffi_value)
 # Re-apply TileLang's preferred backend settings after TVM's config may have
 # overridden the USE_* cache entries.
 foreach(BACKEND IN LISTS TILELANG_BACKENDS)
